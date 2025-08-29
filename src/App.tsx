@@ -1,88 +1,20 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useChat, ChatMessage } from "./useChat";
-import './index.css';
+import { useChat } from "./useChat";
+import ChatMessageItem from "./chat";
 
-// --- Iconos ---
-const ChatbotIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
-
-const UserIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
-  </svg>
-);
-
-// --- Loading ---
-const LoadingMessage = () => (
-  <div className="flex items-center text-gray-500">
-    <span>Escribiendo</span>
-    <span className="animate-bounce ml-1">.</span>
-    <span className="animate-bounce ml-1" style={{ animationDelay: "150ms" }}>.</span>
-    <span className="animate-bounce ml-1" style={{ animationDelay: "300ms" }}>.</span>
-  </div>
-);
-
-export default function ChatBot() {
-  const { messages, setMessages, sendMessage, loading, userName, setUserName } = useChat();
+const ChatBot: React.FC = () => {
+  const { messages, loading, userName, sendMessage, resetUserName } = useChat();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- Scroll al final de los mensajes ---
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // --- Enviar mensaje ---
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim()) return;
-
-    // Pedir nombre si aún no hay
-    if (!userName) {
-      const nameRegex = /^[a-zA-ZÀ-ÿ\s]{2,30}$/;
-      if (!nameRegex.test(input.trim())) {
-        setMessages(prev => [
-          ...prev,
-          { role: "system", content: "Por favor, ingresa un nombre válido (solo letras)." }
-        ]);
-        setInput("");
-        return;
-      }
-
-      // Guardar nombre
-      const trimmedName = input.trim();
-      setUserName(trimmedName);
-      localStorage.setItem("chat_user_name", trimmedName);
-
-      setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: `¡Encantado de conocerte, ${trimmedName}! ¿En qué puedo ayudarte hoy?` }
-      ]);
-      setInput("");
-      return;
-    }
-
-    // Validar lenguaje respetuoso
-    const forbiddenWords = ["hp", "hijueputa", "gonorrea", "malparido"];
-    if (forbiddenWords.some(word => input.toLowerCase().includes(word))) {
-      setMessages(prev => [
-        ...prev,
-        { role: "system", content: "⚠️ Por favor, mantén un lenguaje respetuoso." }
-      ]);
-      setInput("");
-      return;
-    }
-
-    // Enviar mensaje al backend
-    await sendMessage(input);
+    sendMessage(input);
     setInput("");
   };
 
@@ -90,33 +22,28 @@ export default function ChatBot() {
     <div className="fixed bottom-4 right-4 flex flex-col items-end z-50">
       {isOpen && (
         <div className="flex flex-col w-80 max-h-[500px] bg-white rounded-2xl shadow-xl border overflow-hidden">
-          
-          {/* Header */}
           <div className="bg-blue-600 text-white p-3 flex justify-between items-center">
             <span className="font-semibold">Alcaldía municipal de Yopal</span>
             <button onClick={() => setIsOpen(false)} className="text-xl">✖</button>
           </div>
 
-          {/* Mensajes */}
           <div className="flex-1 p-3 overflow-y-auto bg-gray-100">
-            {messages.map((m: ChatMessage, i: number) => (
-              <div key={i} className={`flex mb-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`flex items-start gap-1 max-w-xs px-3 py-2 rounded-2xl shadow 
-                  ${m.role === "user"
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : m.role === "system"
-                      ? "bg-red-100 text-red-800 border border-red-400 rounded-md"
-                      : "bg-white text-gray-800 rounded-bl-none border"}`}>
-                  {m.role === "assistant" && m.content !== "loading" && <ChatbotIcon />}
-                  {m.role === "user" && <UserIcon />}
-                  <div>{m.content === "loading" ? <LoadingMessage /> : m.content}</div>
+            {messages.map((m, i) => (
+              <ChatMessageItem key={i} message={m} resetUserName={resetUserName} />
+            ))}
+            {loading && (
+              <div className="flex mb-2 justify-start">
+                <div className="flex items-center gap-1 max-w-xs px-3 py-2 bg-white text-gray-800 rounded-bl-none border animate-fadeIn">
+                  <span>Escribiendo</span>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <span key={i} className="animate-bounce ml-1" style={{ animationDelay: `${i * 150}ms` }}>.</span>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="flex items-center gap-2 p-2 border-t bg-white">
             <input
               value={input}
@@ -135,7 +62,6 @@ export default function ChatBot() {
         </div>
       )}
 
-      {/* Botón de abrir/cerrar */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-3 bg-green-600 text-white rounded-full shadow-lg hover:scale-110 transition"
@@ -144,4 +70,6 @@ export default function ChatBot() {
       </button>
     </div>
   );
-}
+};
+
+export default ChatBot;
