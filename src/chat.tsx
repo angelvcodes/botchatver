@@ -32,7 +32,7 @@ const ChatMessageItem: React.FC<MessageProps> = ({ message, resetUserName }) => 
             onClick={resetUserName}
             className="text-xs text-blue-600 underline mt-1 self-start hover:text-blue-800 transition"
           >
-            No soy yo, cambiar nombre
+            ¡No soy yo!
           </button>
         )}
       </div>

@@ -28,11 +28,11 @@ export function useChat() {
     if (storedName) {
       setUserName(storedName);
       setMessages([
-        { role: "assistant", content: `¡Hola de nuevo, ${storedName}! ¿Eres tú?`, id: "welcome-with-name" }
+        { role: "assistant", content: `¡Hola de nuevo, ${storedName}!`, id: "welcome-with-name" }
       ]);
     } else {
       setMessages([
-        { role: "assistant", content: "👋 Hola, soy tu asistente. ¿Cómo te llamas?" }
+        { role: "assistant", content: "👋 ¡Hola! ¡Qué gusto tenerte aquí! Soy Cecilia, ¿Cuál es tu nombre?" }
       ]);
     }
   }, []);
@@ -58,12 +58,12 @@ export function useChat() {
       setMessages(prev => [
         ...prev,
         { role: "user", content: trimmedName },
-        { role: "assistant", content: `¡Encantado de conocerte, ${trimmedName}! ¿En qué puedo ayudarte hoy?` }
+        { role: "assistant", content: `¡Encantada de conocerte, ${trimmedName}! ¿En qué puedo ayudarte hoy?` }
       ]);
       return;
     }
 
-    const forbiddenWords = ["hp", "hijueputa", "gonorrea", "malparido"];
+    const forbiddenWords = ["hp", "hijueputa", "gonorrea", "malparido", "puta","prostituta"];
     if (forbiddenWords.some(word => text.toLowerCase().includes(word))) {
       const sysMsg: ChatMessage = { role: "system", content: "⚠️ Por favor, mantén un lenguaje respetuoso.", id: uuidv4() };
       setMessages(prev => [...prev, sysMsg]);
@@ -103,7 +103,7 @@ export function useChat() {
   const resetUserName = () => {
     setUserName(null);
     localStorage.removeItem("chat_user_name");
-    setMessages([{ role: "assistant", content: "👋 Hola, soy tu asistente. ¿Cómo te llamas?" }]);
+    setMessages([{ role: "assistant", content: "👋 ¡Hola! ¡Qué gusto tenerte aquí! Soy Cecilia, ¿Cuál es tu nombre?" }]);
   };
 
   return { messages, setMessages, sendMessage, loading, userName, resetUserName };
