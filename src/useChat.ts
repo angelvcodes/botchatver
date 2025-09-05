@@ -40,14 +40,20 @@ export function useChat() {
   const sendMessage = async (text: string) => {
     if (!text.trim() || !sessionId) return;
 
+    // 🔹 1. Validar nombre si aún no está definido
     if (!userName) {
       const nameRegex = /^[a-zA-ZÀ-ÿ\s]{2,30}$/;
       if (!nameRegex.test(text.trim())) {
         const sysMsg: ChatMessage = { role: "system", content: "Por favor, ingresa un nombre válido (solo letras).", id: uuidv4() };
         setMessages(prev => [...prev, sysMsg]);
+
+        // FadeOut + eliminar
+        setTimeout(() => {
+          setMessages(prev => prev.map(m => m.id === sysMsg.id ? { ...m, isFading: true } : m));
+        }, 4000);
         setTimeout(() => {
           setMessages(prev => prev.filter(m => m.id !== sysMsg.id));
-        }, 5000);
+        }, 4500);
         return;
       }
 
@@ -63,7 +69,8 @@ export function useChat() {
       return;
     }
 
-    const forbiddenWords = ["hp", "hijueputa", "gonorrea", "malparido", "puta","prostituta"];
+    // 🔹 2. Validar palabras prohibidas
+    const forbiddenWords = ["hp", "hijueputa", "gonorrea", "malparido", "puta", "prostituta"];
     if (forbiddenWords.some(word => text.toLowerCase().includes(word))) {
       const sysMsg: ChatMessage = { role: "system", content: "⚠️ Por favor, mantén un lenguaje respetuoso.", id: uuidv4() };
       setMessages(prev => [...prev, sysMsg]);
@@ -72,8 +79,6 @@ export function useChat() {
       setTimeout(() => {
         setMessages(prev => prev.map(m => m.id === sysMsg.id ? { ...m, isFading: true } : m));
       }, 4000);
-
-      // Eliminar después de animación
       setTimeout(() => {
         setMessages(prev => prev.filter(m => m.id !== sysMsg.id));
       }, 4500);
@@ -81,6 +86,7 @@ export function useChat() {
       return;
     }
 
+    // 🔹 3. Enviar mensaje del usuario
     setMessages(prev => [...prev, { role: "user", content: text }]);
     setLoading(true);
 
@@ -90,21 +96,41 @@ export function useChat() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, message: text })
       });
+
       const data = await res.json();
 
-      setMessages(prev => [...prev, { role: "assistant", content: data.textResponse }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "⚠️ Error al conectar con el servidor." }]);
+      // 🔹 4. Siempre meter respuesta del backend
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: data.textResponse || "⚠️ No hubo respuesta del servidor.",
+        id: uuidv4()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (err) {
+      console.error("Error en fetch:", err);
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: "⚠️ Error al conectar con el servidor.", id: uuidv4() }
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
   const resetUserName = () => {
-    setUserName(null);
-    localStorage.removeItem("chat_user_name");
-    setMessages([{ role: "assistant", content: "👋 ¡Hola! ¡Qué gusto tenerte aquí! Soy Cecilia, ¿Cuál es tu nombre?" }]);
-  };
+  setUserName(null);
+  localStorage.removeItem("chat_user_name");
+
+  // Filtramos cualquier mensaje de bienvenida con nombre
+  setMessages(prev => prev.filter(m => m.id !== "welcome-with-name"));
+
+  // Agregamos mensaje para solicitar el nombre de nuevo
+  setMessages(prev => [
+    ...prev,
+    { role: "assistant", content: "👋 ¡Hola! ¡Qué gusto tenerte aquí! Soy Cecilia, ¿Cuál es tu nombre?" }
+  ]);
+};
 
   return { messages, setMessages, sendMessage, loading, userName, resetUserName };
 }
