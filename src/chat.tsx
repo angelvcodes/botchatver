@@ -1,27 +1,35 @@
 import React from "react";
 import { ChatMessage } from "./useChat";
-
+import { themeColors } from "./theme";
 
 interface MessageProps {
   message: ChatMessage;
   resetUserName?: () => void;
   userName?: string;
-  theme?: "light" | "dark"; // nuevo prop
+  theme?: "light" | "dark"; // Tema actual
 }
 
-const ChatMessageItem: React.FC<MessageProps> = ({ message, resetUserName, userName, theme = "light" }) => {
+const ChatMessageItem: React.FC<MessageProps> = ({
+  message,
+  resetUserName,
+  userName,
+  theme = "light",
+}) => {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
 
-  const containerClasses = `flex mb-2 transition-all duration-300 ${isUser ? "justify-end" : "justify-start"}`;
+  const colors = themeColors[theme]; // Obtenemos todas las clases del tema
 
-  const bubbleClasses = `flex flex-col gap-1 max-w-xs px-3 py-1 rounded-2xl shadow ${
-    isUser
-      ? `${theme === "dark" ? "bg-red-700 text-white" : "bg-[#078930] text-white"} rounded-br-none animate-fadeIn`
-      : isSystem
-      ? `${theme === "dark" ? "bg-red-700 text-red-200 border-red-600" : "bg-red-100 text-red-800 border border-red-400"} rounded-md animate-fadeIn ${message.isFading ? "animate-fadeOut" : ""}`
-      : `${theme === "dark" ? "bg-gray-700 text-white border-gray-600" : "bg-white text-gray-800 border"} rounded-bl-none animate-fadeIn`
+  // Contenedor de la burbuja
+  const containerClasses = `flex mb-2 transition-all duration-300 ${
+    isUser ? "justify-end" : "justify-start"
   }`;
+
+  // Burbujas según tipo de mensaje
+  let bubbleClasses = "flex flex-col gap-1 max-w-xs px-3 py-1 rounded-2xl shadow";
+  if (isUser) bubbleClasses += ` ${colors.userBubble}`;
+  else if (isSystem) bubbleClasses += ` ${colors.systemBubble} ${message.isFading ? "animate-fadeOut" : ""}`;
+  else bubbleClasses += ` ${colors.botBubble}`;
 
   return (
     <div className={containerClasses}>
@@ -45,8 +53,7 @@ const ChatMessageItem: React.FC<MessageProps> = ({ message, resetUserName, userN
   );
 };
 
-
-// Función para convertir texto plano en HTML con títulos en negrita, listas y saltos automáticos
+// Función para convertir texto plano a HTML (listas, títulos, saltos de línea)
 function parseTextToHtml(text: string): string {
   const lines = text.split("\n");
   let html = "";
@@ -60,17 +67,18 @@ function parseTextToHtml(text: string): string {
 
   lines.forEach(line => {
     const trimmed = line.trim();
-    if (!trimmed) return; // saltar líneas vacías
+    if (!trimmed) return;
 
-    const olMatch = trimmed.match(/^\d+\.\s+(.*)/);       // lista numerada
-    const ulMatch = trimmed.match(/^\-\s+(.*)/);          // lista desordenada
-    const boldTitleMatch = trimmed.match(/^(.+):$/);      // línea que termina en ":" como título
+    const olMatch = trimmed.match(/^\d+\.\s+(.*)/);
+    const ulMatch = trimmed.match(/^\-\s+(.*)/);
+    const boldTitleMatch = trimmed.match(/^(.+):$/);
 
     if (olMatch) {
       closeLists();
       html += `<ol style="margin-top: 1em;"><li><strong>${olMatch[1]}</strong></li></ol>`;
     } else if (ulMatch) {
-      if (!ulOpen) { html += '<ul style="margin-top: 1em;">'; ulOpen = true; }
+      if (!ulOpen) html += '<ul style="margin-top:1em;">';
+
       html += `<li>${ulMatch[1]}</li>`;
     } else if (boldTitleMatch) {
       closeLists();
@@ -84,6 +92,5 @@ function parseTextToHtml(text: string): string {
   closeLists();
   return html;
 }
-
 
 export default ChatMessageItem;
