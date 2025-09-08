@@ -88,7 +88,7 @@ const ChatBot: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`p-3 rounded-full shadow-lg hover:scale-110 transition
-                    ${theme === "dark" ? "bg-gray-800 text-white" : "bg-green-600 text-white"}`}
+                    ${theme === "dark" ? "bg-gray-800 text-white" : "bg-[#078930] text-white"}`}
       >
         💬
       </button>

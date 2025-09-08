@@ -15,7 +15,7 @@ const ChatMessageItem: React.FC<MessageProps> = ({ message, resetUserName, userN
 
   const containerClasses = `flex mb-2 transition-all duration-300 ${isUser ? "justify-end" : "justify-start"}`;
 
-  const bubbleClasses = `flex flex-col gap-1 max-w-xs px-3 py-2 rounded-2xl shadow ${
+  const bubbleClasses = `flex flex-col gap-1 max-w-xs px-3 py-1 rounded-2xl shadow ${
     isUser
       ? `${theme === "dark" ? "bg-red-700 text-white" : "bg-[#078930] text-white"} rounded-br-none animate-fadeIn`
       : isSystem
